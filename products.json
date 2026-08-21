@@ -1,7 +1,8 @@
 {
   "categories": [
     "PHONES",
-    "CHARGERS"
+    "CHARGERS",
+    "HOME APPLIANCES"
   ],
   "products": [
     {
@@ -11,6 +12,15 @@
       "category": "PHONES",
       "instock": "yes",
       "image": "images/mt3hhc25uuh1.jpg",
+      "published": true
+    },
+    {
+      "id": "mt3hjr4akyfa",
+      "name": "Fridge",
+      "price": 2000,
+      "category": "HOME APPLIANCES",
+      "instock": "yes",
+      "image": "images/mt3hjr4akyfa.jpg",
       "published": false
     }
   ]
