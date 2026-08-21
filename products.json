@@ -21,6 +21,15 @@
       "category": "HOME APPLIANCES",
       "instock": "yes",
       "image": "images/mt3hjr4akyfa.jpg",
+      "published": true
+    },
+    {
+      "id": "mt3hmagmgj4t",
+      "name": "Washing Machine",
+      "price": 3000,
+      "category": "HOME APPLIANCES",
+      "instock": "yes",
+      "image": "images/mt3hmagmgj4t.jpg",
       "published": false
     }
   ]
