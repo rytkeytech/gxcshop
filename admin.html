@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GENX CHOICE — Shop Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<!-- ============================================================
+  Shop Manager — for YOU, the shop owner, not customers.
+
+  Two ways to get products live:
+  A) PUBLISH (recommended) — one-time GitHub setup below, then every
+     product you add gets pushed straight to your live site. Photos
+     are uploaded as their own small files, so products.json stays
+     small even with thousands of products.
+  B) MANUAL — Download products.json and upload it yourself on
+     GitHub. Still here as a fallback if you'd rather not use a token.
+
+  See README.md for full setup steps.
+============================================================= -->
+<style>
+  :root{
+    --navy:#13213C; --gold:#C08B2F; --cream:#FAF8F4; --card:#fff;
+    --ink:#1a1f2b; --slate:#5B6472; --line:#E7E2D8; --danger:#8a2c2c; --ok:#1f7a4d;
+    --radius:12px; --shadow:0 3px 14px rgba(19,33,60,0.08);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Inter',sans-serif;background:var(--cream);color:var(--ink);padding-bottom:60px;}
+  h1,h2,h3{font-family:'Manrope',sans-serif;margin:0;color:var(--navy);}
+  header{background:var(--navy);color:#fff;padding:16px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+  header img{width:32px;height:32px;background:#fff;border-radius:8px;padding:3px;}
+  header h1{color:#fff;font-size:16px;}
+  header span{display:block;font-size:11.5px;color:#c7cede;}
+  main{max-width:760px;margin:0 auto;padding:20px 16px;}
+  .panel{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:18px;}
+  .panel h2{font-size:15.5px;margin-bottom:4px;}
+  .panel .sub{font-size:12.5px;color:var(--slate);margin-bottom:14px;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;}
+  .field{margin-bottom:12px;flex:1;min-width:120px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--slate);margin-bottom:4px;}
+  .field input[type=text], .field input[type=number], .field input[type=password], .field select{
+    width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:14px;font-family:inherit;background:#fff;
+  }
+  .btn{border:none;border-radius:8px;padding:10px 16px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:inherit;}
+  .btn-navy{background:var(--navy);color:#fff;}
+  .btn-gold{background:var(--gold);color:var(--navy);}
+  .btn-ghost{background:var(--cream);color:var(--navy);border:1px solid var(--line);}
+  .btn-danger{background:none;color:var(--danger);font-weight:600;font-size:12.5px;padding:4px 6px;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+
+  .cat-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  .cat-pill{
+    background:var(--cream);border:1px solid var(--line);border-radius:999px;
+    padding:6px 8px 6px 14px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;
+  }
+  .cat-pill button{background:none;border:none;color:var(--danger);font-size:15px;cursor:pointer;line-height:1;padding:0 2px;}
+  .empty-msg{color:var(--slate);font-size:13px;font-style:italic;}
+
+  .img-drop{
+    border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;
+    cursor:pointer;background:var(--cream);position:relative;overflow:hidden;
+  }
+  .img-drop img{max-height:110px;margin:0 auto;border-radius:6px;}
+  .img-drop .ph{color:var(--slate);font-size:12.5px;}
+  .img-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+  table.plist{width:100%;border-collapse:collapse;margin-top:6px;}
+  table.plist th{text-align:left;font-size:11px;color:var(--slate);text-transform:uppercase;letter-spacing:.03em;padding:6px 8px;border-bottom:1px solid var(--line);}
+  table.plist td{padding:8px;border-bottom:1px solid var(--line);font-size:13px;vertical-align:middle;}
+  table.plist img{width:34px;height:34px;object-fit:cover;border-radius:6px;background:var(--cream);}
+  .stock-yes{color:var(--ok);font-weight:600;font-size:12px;}
+  .stock-no{color:var(--danger);font-weight:600;font-size:12px;}
+  .price-mono{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+  .pub-badge{font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:999px;font-family:'IBM Plex Mono',monospace;}
+  .pub-yes{background:#e4f3ea;color:var(--ok);}
+  .pub-no{background:#fbeee9;color:#a15a1f;}
+
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  .status{font-size:12.5px;color:var(--slate);}
+  .status.ok{color:var(--ok);}
+  .divider{border:none;border-top:1px dashed var(--line);margin:14px 0;}
+  .warn-box{background:#fbf2df;border:1px solid #eacf9a;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#7a5a1c;margin-bottom:16px;}
+  .method-toggle{display:flex;gap:8px;margin-bottom:16px;}
+  .method-toggle button{flex:1;padding:10px;border-radius:8px;border:1px solid var(--line);background:#fff;font-weight:700;font-size:13px;color:var(--slate);}
+  .method-toggle button.active{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+  .log{
+    background:#0e1a30;color:#cfe0d8;font-family:'IBM Plex Mono',monospace;font-size:11.5px;
+    border-radius:8px;padding:10px 12px;max-height:180px;overflow-y:auto;margin-top:10px;display:none;
+  }
+  .log.show{display:block;}
+  .log .line{padding:2px 0;}
+  .log .err{color:#f3a9a9;}
+  .log .ok{color:#8fe0b4;}
+  details.settings summary{cursor:pointer;font-weight:700;font-size:13.5px;color:var(--navy);padding:4px 0;}
+  .conn-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--danger);margin-right:6px;}
+  .conn-dot.ok{background:var(--ok);}
+</style>
+</head>
+<body>
+
+<header>
+  <img src="logo.png" alt="">
+  <div>
+    <h1>Shop Manager</h1>
+    <span>Build your categories &amp; products — GENX CHOICE ENTERPRISE</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Publish method -->
+  <div class="panel">
+    <h2>Publishing method</h2>
+    <div class="sub">Auto-publish pushes updates straight to your live site. Manual keeps the download/upload workflow.</div>
+    <div class="method-toggle">
+      <button id="modeAutoBtn" class="active">⚡ Auto-publish</button>
+      <button id="modeManualBtn">📥 Manual</button>
+    </div>
+
+    <div id="autoPanel">
+      <details class="settings" id="settingsDetails">
+        <summary><span class="conn-dot" id="connDot"></span>GitHub connection settings</summary>
+        <div style="margin-top:12px;">
+          <div class="row">
+            <div class="field">
+              <label>GitHub username</label>
+              <input type="text" id="ghOwner" placeholder="rytkeytech">
+            </div>
+            <div class="field">
+              <label>Repository name</label>
+              <input type="text" id="ghRepo" placeholder="store">
+            </div>
+          </div>
+          <div class="row">
+            <div class="field">
+              <label>Branch</label>
+              <input type="text" id="ghBranch" placeholder="main">
+            </div>
+            <div class="field">
+              <label>Folder (leave blank if files are in repo root)</label>
+              <input type="text" id="ghFolder" placeholder="e.g. store">
+            </div>
+          </div>
+          <div class="field">
+            <label>Personal access token</label>
+            <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx or github_pat_xxxx">
+          </div>
+          <div class="row">
+            <button class="btn btn-navy" id="saveSettingsBtn">Save settings</button>
+            <button class="btn btn-ghost" id="testConnBtn">Test connection</button>
+          </div>
+          <div class="status" id="connStatus" style="margin-top:8px;">Not connected yet. See README.md for how to create a token.</div>
+        </div>
+      </details>
+    </div>
+  </div>
+
+  <div class="warn-box" id="manualWarn" style="display:none;">
+    ⚠️ Manual mode: changes here save in <em>this browser only</em>. Click <b>Download products.json</b>
+    at the bottom and upload that file to your GitHub repo yourself for customers to see updates.
+  </div>
+
+  <!-- Categories -->
+  <div class="panel">
+    <h2>1. Categories</h2>
+    <div class="sub">e.g. Chargers, Cables, Screen Protectors, Repairs</div>
+    <div class="cat-list" id="catList"></div>
+    <div class="row">
+      <div class="field" style="margin-bottom:0;">
+        <input type="text" id="newCatInput" placeholder="New category name">
+      </div>
+      <button class="btn btn-navy" id="addCatBtn">Add category</button>
+    </div>
+  </div>
+
+  <!-- Add product -->
+  <div class="panel">
+    <h2>2. Add a product</h2>
+    <div class="sub">Fill this in, then click Add product below</div>
+    <div class="row">
+      <div class="field">
+        <label>Product name</label>
+        <input type="text" id="pName" placeholder="e.g. Fast Charger 20W">
+      </div>
+      <div class="field">
+        <label>Price (GH₵)</label>
+        <input type="number" id="pPrice" min="0" step="0.01" placeholder="45">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label>Category</label>
+        <select id="pCategory"><option value="">Add a category first ↑</option></select>
+      </div>
+      <div class="field">
+        <label>In stock?</label>
+        <select id="pStock">
+          <option value="yes">Yes — available</option>
+          <option value="no">No — out of stock</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>Photo</label>
+      <div class="img-drop" id="imgDrop">
+        <img id="imgPreview" style="display:none;">
+        <span class="ph" id="imgPh">Tap to choose a photo from your phone/computer</span>
+        <input type="file" accept="image/*" id="pImage">
+      </div>
+    </div>
+    <button class="btn btn-gold" id="addProductBtn">＋ Add product</button>
+    <span class="status" id="addStatus"></span>
+  </div>
+
+  <!-- Product list -->
+  <div class="panel">
+    <h2>3. Your products (<span id="prodCount">0</span>)</h2>
+    <div class="sub">Delete or toggle stock anytime.</div>
+    <div id="emptyProducts" class="empty-msg">No products yet — add your first one above.</div>
+    <table class="plist" id="prodTable" style="display:none;">
+      <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Live?</th><th></th></tr></thead>
+      <tbody id="prodBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Publish -->
+  <div class="panel">
+    <h2>4. Publish</h2>
+    <div id="autoPublishRow">
+      <div class="sub">Pushes new/changed photos and products.json straight to your live site.</div>
+      <button class="btn btn-gold" id="publishBtn">🚀 Publish to live site</button>
+      <span class="status" id="publishStatus"></span>
+      <div class="log" id="publishLog"></div>
+    </div>
+    <div id="manualPublishRow" style="display:none;">
+      <div class="sub">Download the file, then upload it to your GitHub repo (replacing the old products.json).</div>
+      <div class="toolbar">
+        <button class="btn btn-navy" id="downloadBtn">⬇ Download products.json</button>
+        <label class="btn btn-ghost" style="position:relative;overflow:hidden;">
+          ⬆ Import existing products.json
+          <input type="file" accept="application/json" id="importInput" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+        </label>
+      </div>
+    </div>
+    <div class="status" id="saveStatus" style="margin-top:8px;">All changes auto-saved in this browser</div>
+  </div>
+</main>
+
+<script>
+const STORAGE_KEY = "genx_shop_data_v1";
+const SETTINGS_KEY = "genx_shop_gh_settings_v1";
+let data = { categories: [], products: [] };
+let pendingImage = "";
+let mode = "auto"; // "auto" | "manual"
+let settings = { owner:"", repo:"", branch:"main", folder:"", token:"" };
+
+/* ---------- persistence ---------- */
+function loadFromStorage(){
+  try{ const raw = localStorage.getItem(STORAGE_KEY); if(raw) data = JSON.parse(raw); }catch(e){}
+  try{ const raw = localStorage.getItem(SETTINGS_KEY); if(raw) settings = JSON.parse(raw); }catch(e){}
+}
+function saveToStorage(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    flash("saveStatus", "Saved ✓", true);
+  }catch(e){ console.error(e); }
+}
+function flash(id, msg, ok){
+  const el = document.getElementById(id);
+  const prev = el.textContent;
+  el.textContent = msg;
+  el.className = "status" + (ok ? " ok" : "");
+  setTimeout(()=>{ el.textContent = id==="saveStatus" ? "All changes auto-saved in this browser" : ""; el.className="status"; }, 1800);
+}
+
+/* ---------- mode toggle ---------- */
+function setMode(m){
+  mode = m;
+  document.getElementById("modeAutoBtn").classList.toggle("active", m==="auto");
+  document.getElementById("modeManualBtn").classList.toggle("active", m==="manual");
+  document.getElementById("autoPanel").style.display = m==="auto" ? "block" : "none";
+  document.getElementById("manualWarn").style.display = m==="manual" ? "block" : "none";
+  document.getElementById("autoPublishRow").style.display = m==="auto" ? "block" : "none";
+  document.getElementById("manualPublishRow").style.display = m==="manual" ? "block" : "none";
+}
+document.getElementById("modeAutoBtn").addEventListener("click", () => setMode("auto"));
+document.getElementById("modeManualBtn").addEventListener("click", () => setMode("manual"));
+
+/* ---------- GitHub settings ---------- */
+function loadSettingsIntoForm(){
+  document.getElementById("ghOwner").value = settings.owner || "";
+  document.getElementById("ghRepo").value = settings.repo || "";
+  document.getElementById("ghBranch").value = settings.branch || "main";
+  document.getElementById("ghFolder").value = settings.folder || "";
+  document.getElementById("ghToken").value = settings.token || "";
+}
+document.getElementById("saveSettingsBtn").addEventListener("click", () => {
+  settings = {
+    owner: document.getElementById("ghOwner").value.trim(),
+    repo: document.getElementById("ghRepo").value.trim(),
+    branch: document.getElementById("ghBranch").value.trim() || "main",
+    folder: document.getElementById("ghFolder").value.trim().replace(/^\/+|\/+$/g,""),
+    token: document.getElementById("ghToken").value.trim()
+  };
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  flash("connStatus", "Settings saved.", true);
+});
+
+function ghPath(filename){
+  return settings.folder ? `${settings.folder}/${filename}` : filename;
+}
+function ghApiUrl(filename){
+  return `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${ghPath(filename)}`;
+}
+function ghHeaders(){
+  return {
+    "Authorization": `token ${settings.token}`,
+    "Accept": "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28"
+  };
+}
+async function ghGetFile(filename){
+  const res = await fetch(`${ghApiUrl(filename)}?ref=${encodeURIComponent(settings.branch)}`, { headers: ghHeaders() });
+  if(res.status === 404) return null;
+  if(!res.ok) throw new Error(`GET ${filename} failed (${res.status})`);
+  return res.json();
+}
+async function ghPutFile(filename, base64Content, message){
+  const existing = await ghGetFile(filename);
+  const body = {
+    message,
+    content: base64Content,
+    branch: settings.branch
+  };
+  if(existing) body.sha = existing.sha;
+  const res = await fetch(ghApiUrl(filename), {
+    method: "PUT",
+    headers: { ...ghHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  });
+  if(!res.ok){
+    const errText = await res.text().catch(()=> "");
+    throw new Error(`Save ${filename} failed (${res.status}) ${errText.slice(0,200)}`);
+  }
+  return res.json();
+}
+
+document.getElementById("testConnBtn").addEventListener("click", async () => {
+  document.getElementById("saveSettingsBtn").click();
+  const dot = document.getElementById("connDot");
+  flash("connStatus", "Testing…", false);
+  try{
+    const res = await fetch(`https://api.github.com/repos/${settings.owner}/${settings.repo}`, { headers: ghHeaders() });
+    if(!res.ok) throw new Error(`Repo check failed (${res.status})`);
+    const json = await res.json();
+    dot.classList.add("ok");
+    document.getElementById("connStatus").textContent = `Connected to ${json.full_name} ✓`;
+    document.getElementById("connStatus").className = "status ok";
+  }catch(e){
+    dot.classList.remove("ok");
+    document.getElementById("connStatus").textContent = "Connection failed — check username, repo name, branch and token.";
+    document.getElementById("connStatus").className = "status";
+    console.error(e);
+  }
+});
+
+/* ---------- categories ---------- */
+function renderCategories(){
+  const list = document.getElementById("catList");
+  if(!data.categories.length){
+    list.innerHTML = `<span class="empty-msg">No categories yet.</span>`;
+  } else {
+    list.innerHTML = data.categories.map(c => `
+      <span class="cat-pill">${c}<button data-cat="${c}" title="Delete category">&times;</button></span>
+    `).join("");
+    list.querySelectorAll("button[data-cat]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const cat = btn.dataset.cat;
+        const inUse = data.products.some(p => p.category === cat);
+        if(inUse && !confirm(`"${cat}" is used by some products. Delete it anyway? Those products will need a new category.`)) return;
+        data.categories = data.categories.filter(c => c !== cat);
+        saveToStorage();
+        renderCategories();
+        renderCategorySelect();
+        renderProducts();
+      });
+    });
+  }
+  renderCategorySelect();
+}
+function renderCategorySelect(){
+  const sel = document.getElementById("pCategory");
+  if(!data.categories.length){
+    sel.innerHTML = `<option value="">Add a category first ↑</option>`;
+    return;
+  }
+  sel.innerHTML = data.categories.map(c => `<option value="${c}">${c}</option>`).join("");
+}
+document.getElementById("addCatBtn").addEventListener("click", () => {
+  const input = document.getElementById("newCatInput");
+  const val = input.value.trim();
+  if(!val) return;
+  if(data.categories.includes(val)){ alert("That category already exists."); return; }
+  data.categories.push(val);
+  input.value = "";
+  saveToStorage();
+  renderCategories();
+});
+document.getElementById("newCatInput").addEventListener("keydown", e => {
+  if(e.key === "Enter"){ e.preventDefault(); document.getElementById("addCatBtn").click(); }
+});
+
+/* ---------- image handling ---------- */
+document.getElementById("pImage").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 640;
+      let w = img.width, h = img.height;
+      if(w > h && w > MAX){ h = Math.round(h * MAX / w); w = MAX; }
+      else if(h > MAX){ w = Math.round(w * MAX / h); h = MAX; }
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+      pendingImage = canvas.toDataURL("image/jpeg", 0.72);
+      const prev = document.getElementById("imgPreview");
+      prev.src = pendingImage;
+      prev.style.display = "block";
+      document.getElementById("imgPh").style.display = "none";
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ---------- add product ---------- */
+document.getElementById("addProductBtn").addEventListener("click", () => {
+  const name = document.getElementById("pName").value.trim();
+  const price = parseFloat(document.getElementById("pPrice").value);
+  const category = document.getElementById("pCategory").value;
+  const instock = document.getElementById("pStock").value;
+  const statusEl = document.getElementById("addStatus");
+
+  if(!name || isNaN(price) || !category){
+    statusEl.textContent = "Please fill in name, price and category.";
+    statusEl.style.color = "var(--danger)";
+    return;
+  }
+
+  data.products.push({
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name, price, category, instock,
+    image: pendingImage || "",
+    published: false
+  });
+  saveToStorage();
+  renderProducts();
+
+  document.getElementById("pName").value = "";
+  document.getElementById("pPrice").value = "";
+  document.getElementById("pImage").value = "";
+  document.getElementById("imgPreview").style.display = "none";
+  document.getElementById("imgPh").style.display = "block";
+  pendingImage = "";
+  statusEl.style.color = "var(--ok)";
+  statusEl.textContent = "Added ✓";
+  setTimeout(()=>{ statusEl.textContent=""; }, 1500);
+});
+
+/* ---------- product list ---------- */
+function renderProducts(){
+  document.getElementById("prodCount").textContent = data.products.length;
+  const empty = document.getElementById("emptyProducts");
+  const table = document.getElementById("prodTable");
+  if(!data.products.length){
+    empty.style.display = "block";
+    table.style.display = "none";
+    return;
+  }
+  empty.style.display = "none";
+  table.style.display = "table";
+  document.getElementById("prodBody").innerHTML = data.products.map(p => `
+    <tr>
+      <td>${p.image ? `<img src="${p.image}">` : ""}</td>
+      <td>${p.name}</td>
+      <td>${p.category}</td>
+      <td class="price-mono">GH₵${p.price.toFixed(2)}</td>
+      <td><span class="${p.instock==='yes' ? 'stock-yes' : 'stock-no'}" data-toggle="${p.id}" style="cursor:pointer;">${p.instock==='yes' ? 'In stock' : 'Out of stock'}</span></td>
+      <td><span class="pub-badge ${p.published ? 'pub-yes' : 'pub-no'}">${p.published ? 'LIVE' : 'PENDING'}</span></td>
+      <td><button class="btn-danger" data-del="${p.id}">Delete</button></td>
+    </tr>
+  `).join("");
+
+  document.querySelectorAll("[data-del]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if(!confirm("Delete this product?")) return;
+      data.products = data.products.filter(p => p.id !== btn.dataset.del);
+      saveToStorage();
+      renderProducts();
+    });
+  });
+  document.querySelectorAll("[data-toggle]").forEach(el => {
+    el.addEventListener("click", () => {
+      const p = data.products.find(p => p.id === el.dataset.toggle);
+      p.instock = p.instock === "yes" ? "no" : "yes";
+      p.published = false; // stock change needs re-publishing
+      saveToStorage();
+      renderProducts();
+    });
+  });
+}
+
+/* ---------- publish log ---------- */
+function logLine(msg, cls){
+  const log = document.getElementById("publishLog");
+  log.classList.add("show");
+  const div = document.createElement("div");
+  div.className = "line" + (cls ? " "+cls : "");
+  div.textContent = msg;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+function clearLog(){
+  const log = document.getElementById("publishLog");
+  log.innerHTML = "";
+  log.classList.remove("show");
+}
+
+/* ---------- auto publish ---------- */
+document.getElementById("publishBtn").addEventListener("click", async () => {
+  if(!settings.owner || !settings.repo || !settings.token){
+    flash("publishStatus", "Set up GitHub connection first (see above).", false);
+    return;
+  }
+  const btn = document.getElementById("publishBtn");
+  btn.disabled = true;
+  clearLog();
+  logLine("Starting publish…");
+
+  try{
+    // 1. Upload any un-published photos as their own files
+    for(const p of data.products){
+      if(p.image && p.image.startsWith("data:") && !p.published){
+        logLine(`Uploading photo for "${p.name}"…`);
+        const base64 = p.image.split(",")[1];
+        const filename = `images/${p.id}.jpg`;
+        await ghPutFile(filename, base64, `Add/update photo for ${p.name}`);
+        p.image = filename; // switch to relative path — keeps products.json small
+        logLine(`  photo uploaded ✓`, "ok");
+      }
+    }
+
+    // 2. Push products.json
+    logLine("Saving products.json…");
+    const jsonContent = btoa(unescape(encodeURIComponent(JSON.stringify({categories: data.categories, products: data.products}, null, 2))));
+    await ghPutFile("products.json", jsonContent, "Update products.json from Shop Manager");
+    logLine("products.json saved ✓", "ok");
+
+    // mark all as published
+    data.products.forEach(p => p.published = true);
+    saveToStorage();
+    renderProducts();
+
+    logLine("Publish complete — your shop is updated ✓", "ok");
+    flash("publishStatus", "Published ✓", true);
+  }catch(e){
+    console.error(e);
+    logLine("Error: " + e.message, "err");
+    flash("publishStatus", "Publish failed — see log below.", false);
+  }finally{
+    btn.disabled = false;
+  }
+});
+
+/* ---------- manual export / import ---------- */
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({categories: data.categories, products: data.products}, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "products.json";
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("importInput").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try{
+      const parsed = JSON.parse(ev.target.result);
+      if(!Array.isArray(parsed.products) || !Array.isArray(parsed.categories)) throw new Error("bad format");
+      data = parsed;
+      data.products.forEach(p => { if(p.published === undefined) p.published = !!(p.image && !p.image.startsWith("data:")); });
+      saveToStorage();
+      renderCategories();
+      renderProducts();
+      alert("Imported successfully.");
+    }catch(err){
+      alert("Couldn't read that file — make sure it's a products.json exported from this page.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+/* ---------- init ---------- */
+loadFromStorage();
+loadSettingsIntoForm();
+renderCategories();
+renderProducts();
+setMode("auto");
+</script>
+</body>
+</html>
