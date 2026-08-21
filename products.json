@@ -3,5 +3,15 @@
     "PHONES",
     "CHARGERS"
   ],
-  "products": []
+  "products": [
+    {
+      "id": "mt3hezqpxy07",
+      "name": "Blender",
+      "price": 1000,
+      "category": "PHONES",
+      "instock": "yes",
+      "image": "images/mt3hezqpxy07.jpg",
+      "published": false
+    }
+  ]
 }
