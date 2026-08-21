@@ -5,12 +5,12 @@
   ],
   "products": [
     {
-      "id": "mt3hezqpxy07",
-      "name": "Blender",
+      "id": "mt3hhc25uuh1",
+      "name": "Huawei",
       "price": 1000,
       "category": "PHONES",
       "instock": "yes",
-      "image": "images/mt3hezqpxy07.jpg",
+      "image": "images/mt3hhc25uuh1.jpg",
       "published": false
     }
   ]
